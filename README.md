@@ -4,9 +4,9 @@
 
 TensorFlow-GPU:
 * CUDA-enabled Graphics Card (Nvidia)
-* Nvidia GPU drivers
+* Nvidia GPU drivers (>=418 if CUDA 10.1 or >=440 if CUDA 10.2)
 * CUDA toolkit
-* cuDNN
+* cuDNN<br>
 see https://www.tensorflow.org/install/gpu for more information
 
 OpenCV-Python and third-party Python packages (Linux):
@@ -20,16 +20,16 @@ Dataset:<br>
 or
 2. https://www.kaggle.com/lopuhin/panda-2020-level-1-2<br>
 
-If 2., make sure to rename the image filenames like this (Bash):
+If 2., make sure to rename image filenames like this (Bash):
 ```
-for f in prostate-cancer-grade-assessment/input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done
+for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done
 ```
 or change the image\_path in generator.py
 
 
 #### Tests
 
-Csv files and image folder should be put in input/prostate-cancer-grade-assessment/. Also make sure that config.py has the correct path to the image folder.
+Csv files and image folder should be put in input/prostate-cancer-grade-assessment/. Also make sure that config.py has the correct path to the image folder, and that tiff\_format is set to True if images are in tiff format (Dataset 1.) or False if images are in jpeg format (Dataset 2.).
 
 To test if data are available, run from terminal:
 
