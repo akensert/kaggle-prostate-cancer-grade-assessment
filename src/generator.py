@@ -73,6 +73,9 @@ else:
 
 @tf.function
 def compute_patches(image, label, ps=Config.input.patch_size, ss=Config.input.sample_size):
+    """Computes patches to be used as input to the Neural Network.
+    If number of patches exceeds the sample_size (ss), the
+    patches with most information are selected"""
     image_shape = tf.shape(image)
     h, w = tf.gather(image_shape, 0), tf.gather(image_shape, 1)
     pad_h = (ps - h % ps)
@@ -130,7 +133,7 @@ def _patch_augment(patch):
 @tf.function
 def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Config.input.sample_size))):
     """Stitches together patches into one single
-    image, with augmentation on patch-level"""
+    big image, with augmentation on patch-level"""
     image = tf.zeros([0, ps, ps, 3], dtype=tf.uint8)
     for i in range(len(patches)):
         _patch = _patch_augment(tf.gather(patches, i))

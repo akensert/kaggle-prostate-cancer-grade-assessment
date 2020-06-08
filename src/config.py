@@ -3,12 +3,8 @@ from manager import DataManager
 
 class Config:
 
-    class model:
-        layers: [5]
-        dropout: [0.2]
-
     class input:
-        path = DataManager.get_path() + 'train_images_jpeg_1/'
+        path = DataManager.get_path() + 'train_images_jpeg_1/' # change this
         tiff_format = False
         tiff_level = 1
         resize_ratio = 1
@@ -16,6 +12,11 @@ class Config:
         patch_size = 256
         sample_size = 36
         preprocess_mode = 'float'
+
+    class model:
+        units = [5]
+        dropout = [0.2]
+        activation = ['sigmoid']
 
     class train:
         seed = 42
@@ -32,5 +33,5 @@ class Config:
             power = 1
 
     class infer:
-        tta = 1
-        predict_every = 1
+        tta = 1 # not utilized yet
+        predict_every = 1 # not utilized yet

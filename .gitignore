@@ -3,6 +3,9 @@ _*/
 *.jpeg
 *.png
 *.tiff
+src/tmp/
+*.h5
+*.h5py
 
 # jupyter 
 MANIFEST
