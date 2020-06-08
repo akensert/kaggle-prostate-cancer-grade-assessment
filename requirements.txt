@@ -1,0 +1,8 @@
+pandas
+matplotlib
+opencv-python
+scikit-learn
+scikit-image
+tqdm
+albumentations
+efficientnet
