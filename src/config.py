@@ -1,4 +1,4 @@
-from manager import DataManager
+from util import DataManager
 
 
 class Config:
