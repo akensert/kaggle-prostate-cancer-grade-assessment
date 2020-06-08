@@ -170,11 +170,8 @@ def preprocess_input(x, y, mode=Config.input.preprocess_mode):
     else:
         return x, y
 
-
-
 def get_dataset(dataframe, input_path, batch_size, training,
                 augment, buffer_size=1, cache=False):
-
     if cache:
         if not(os.path.isdir('tmp/')):
             os.mkdir('tmp')
@@ -198,7 +195,6 @@ def get_dataset(dataframe, input_path, batch_size, training,
     dataset = dataset.map(compute_patches, tf.data.experimental.AUTOTUNE)
     dataset = dataset.map(stitch_patches, tf.data.experimental.AUTOTUNE)
 
-
     if cache:
         dataset = dataset.cache(cache_path)
 
@@ -208,4 +204,5 @@ def get_dataset(dataframe, input_path, batch_size, training,
     dataset = dataset.map(preprocess_input, tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
     return dataset

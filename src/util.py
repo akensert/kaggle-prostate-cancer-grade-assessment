@@ -112,13 +112,26 @@ class DataManager:
         )
 
 if __name__ == "__main__":
+    
     train_data, test_data, sub_data = DataManager.get_all_files()
-    print("train_data shape   =", train_data.shape)
-    print("train_data columns =", train_data.columns.values)
-    print("train_data dtypes  =", train_data.dtypes.values)
-    print("test_data shape    =", test_data.shape)
-    print("test_data columns  =", test_data.columns.values)
-    print("test_data dtypes   =", test_data.dtypes.values)
-    print("sub_data shape     =", sub_data.shape)
-    print("sub_data columns   =", sub_data.columns.values)
-    print("sub_data dtypes    =", sub_data.dtypes.values)
+
+    if train_data is not None:
+        print("train_data shape   =", train_data.shape)
+        print("train_data columns =", train_data.columns.values)
+        print("train_data dtypes  =", train_data.dtypes.values)
+    else:
+        print("train.csv not found")
+
+    if test_data is not None:
+        print("test_data shape    =", test_data.shape)
+        print("test_data columns  =", test_data.columns.values)
+        print("test_data dtypes   =", test_data.dtypes.values)
+    else:
+        print("test.csv not found")
+
+    if sub_data is not None:
+        print("sub_data shape     =", sub_data.shape)
+        print("sub_data columns   =", sub_data.columns.values)
+        print("sub_data dtypes    =", sub_data.dtypes.values)
+    else:
+        print("submission.csv not found")
