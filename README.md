@@ -6,8 +6,10 @@ TensorFlow-GPU:
 * CUDA-enabled Graphics Card (Nvidia)
 * Nvidia GPU drivers (>=418 if CUDA 10.1 or >=440 if CUDA 10.2)
 * CUDA toolkit
-* cuDNN<br>
+* cuDNN
+
 see https://www.tensorflow.org/install/gpu for more information
+
 
 OpenCV-Python and third-party Python packages (Linux):
 ```
