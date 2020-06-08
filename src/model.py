@@ -83,7 +83,6 @@ def fit(model, dataset, loss_fn, optimizer, accum_steps):
             dataset.set_description(
                 "GA {} : LR {:.7f} : LOSS {:.6f}".format("On", current_lr, epoch_loss/(i+1)))
 
-
 def predict(model, dataset):
 
     @tf.function
