@@ -20,6 +20,46 @@ def map_decorator(func):
 
 augmentor = (
     Compose([
+      # OneOf([
+      #   ShiftScaleRotate(
+      #       shift_limit=0.0625,
+      #       scale_limit=0.1,
+      #       rotate_limit=90,
+      #       p=0.5),
+      #   ElasticTransform(
+      #       alpha=601,
+      #       sigma=25,
+      #       alpha_affine=10,
+      #       p=0.5),
+      #   GridDistortion(
+      #       num_steps=3,
+      #       distort_limit=0.5,
+      #       p=0.5),
+      #   NoOp()
+      # ]),
+      OneOf([
+        RandomBrightnessContrast(
+            brightness_limit=0.15,
+            contrast_limit=0.15,
+            p=0.5),
+        RandomGamma(
+            gamma_limit=(85, 115),
+            p=0.5),
+        NoOp()
+      ]),
+      OneOf([
+        RGBShift(
+            r_shift_limit=(-15, 15),
+            g_shift_limit=(-15, 15),
+            b_shift_limit=(-15, 15),
+            p=0.5),
+        HueSaturationValue(
+            hue_shift_limit=(-15, 15),
+            sat_shift_limit=(-25, 25),
+            val_shift_limit=(-15, 15),
+            p=0.5),
+        NoOp()
+      ]),
       RandomRotate90(
           p=0.5),
       Flip(
@@ -135,6 +175,7 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
     """Stitches together patches into one single
     big image, with augmentation on patch-level"""
     image = tf.zeros([0, ps, ps, 3], dtype=tf.uint8)
+    #patches = tf.random.shuffle(patches) # TESTING
     for i in range(len(patches)):
         _patch = _patch_augment(tf.gather(patches, i))
         image = tf.concat((

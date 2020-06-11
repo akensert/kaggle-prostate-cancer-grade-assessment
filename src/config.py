@@ -14,20 +14,20 @@ class Config:
         preprocess_mode = 'float'
 
     class model:
-        units = [5]
-        dropout = [0.2]
-        activation = ['sigmoid']
+        units = [512, 5]
+        dropout = [0.5, 0.0]
+        activation = ['relu', None]
 
     class train:
         seed = 42
-        folds = 5
+        fold = 0
         epochs = 50
         batch_size = 2
-        accum_steps = 4
+        accum_steps = 1
 
         class learning_rate:
-            max = 3e-4
-            min = 3e-5
+            max = 1e-4
+            min = 1e-5
             decay_epochs = 50
             warmup_epochs = 1
             power = 1

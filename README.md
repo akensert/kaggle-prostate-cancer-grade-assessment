@@ -2,6 +2,8 @@
 
 #### Requirements
 
+Python >= 3.6<br>
+
 TensorFlow-GPU:
 * CUDA-enabled Graphics Card (Nvidia)
 * Nvidia GPU drivers (>=418 if CUDA 10.1 or >=440 if CUDA 10.2)
