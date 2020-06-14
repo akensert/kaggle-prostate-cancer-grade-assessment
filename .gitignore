@@ -6,6 +6,7 @@ _*/
 src/tmp/
 *.h5
 *.h5py
+keras_v1/
 
 # jupyter 
 MANIFEST
