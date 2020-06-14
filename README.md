@@ -28,26 +28,14 @@ If 2., make sure to rename image filenames like this (Bash):
 ```
 for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done
 ```
-or change the image\_path in generator.py
+or change the image\_path in generator.py<br>
+
+Csv files and image folder should be put in input/prostate-cancer-grade-assessment/.
 
 
-#### Tests
+#### Train and predict with model
 
-Csv files and image folder should be put in input/prostate-cancer-grade-assessment/. Also make sure that config.py has the correct path to the image folder, and that tiff\_format is set to True if images are in tiff format (Dataset 1.) or False if images are in jpeg format (Dataset 2.).
-
-To test if data are available, run from terminal:
-
+To train and predict with one of the models (e.g. the tf_v1 model), from the terminal do:
 ```
-python util.py
+python src/tf_v1/main.py
 ```
-
-And to test if the model can be run succesfully, run from terminal:
-
-```
-python model.py
-```
-It should run without errors
-
-
-
-
