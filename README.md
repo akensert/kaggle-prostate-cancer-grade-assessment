@@ -24,10 +24,10 @@ Download either of the following datasets (preferably (B)):<br>
 1. (A) https://www.kaggle.com/c/prostate-cancer-grade-assessment/data<br>
 or
 1. (B) https://www.kaggle.com/lopuhin/panda-2020-level-1-2<br>
-2. If (B), make sure to rename image filenames like this (Bash): `for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done`<br>
-3. Put the csv-files and the image folder inside input/prostate-cancer-grade-assessment/
+2. Unzip files and put both the csv-files as well as the image folder inside `input/prostate-cancer-grade-assessment/`
+3. If (B), make sure to rename image filenames like this (Bash): `for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done`<br>
 
 ### Modeling
-1. Navigate to e.g. src/tf\_v1/
+1. Navigate to `src/tf\_v1/`
 2. [Optional; Dataset (B) required] Clean up pen marks in images with pen marks, run `python scripts/remove_penmarks.py`
-3. Run `python main.py`
+3. Finally, start the modeling (fit and predict) by running `python main.py`
