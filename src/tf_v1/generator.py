@@ -227,8 +227,25 @@ def preprocess_input(x, y, mode=Config.input.preprocess_mode):
     else:
         return x, y
 
-def get_dataset(dataframe, input_path, batch_size, training,
-                augment, image_compression=False, buffer_size=1, cache=False):
+def get_dataset(dataframe,
+                input_path,
+                batch_size,
+                training,
+                augment,
+                tta=1,
+                input_size=(1536, 1536, 3),
+                buffer_size=1,
+                cache=False):
+
+
+    def nested_stiching(x, y):
+        return (
+            tf.data.Dataset.from_tensor_slices((x, y))
+            .map(stitch_patches, tf.data.experimental.AUTOTUNE)
+            .map(augmentation, tf.data.experimental.AUTOTUNE)
+            .batch(tta)
+        )
+
     if cache:
         if not(os.path.isdir('../tmp/')):
             os.mkdir('../tmp')
@@ -250,18 +267,28 @@ def get_dataset(dataframe, input_path, batch_size, training,
     dataset = dataset.shuffle(buffer_size)
     dataset = dataset.map(read_image, tf.data.experimental.AUTOTUNE)
     dataset = dataset.map(compute_patches, tf.data.experimental.AUTOTUNE)
-    dataset = dataset.map(stitch_patches, tf.data.experimental.AUTOTUNE)
 
-    if image_compression:
-        dataset = dataset.map(jpeg_compression, tf.data.experimental.AUTOTUNE)
     if cache:
         dataset = dataset.cache(cache_path)
-    if augment:
-        dataset = dataset.map(augmentation, tf.data.experimental.AUTOTUNE)
 
+    if tta > 1:
+        dataset = dataset.map(
+            lambda x, y: (
+                tf.tile(tf.expand_dims(x, 0), (tta, 1, 1, 1, 1)),
+                tf.tile(tf.expand_dims(y, 0), (tta, 1))))
+        dataset = dataset.flat_map(nested_stiching)
+        dataset = dataset.batch(batch_size)
+        dataset = dataset.map(
+            lambda x, y: (
+                tf.reshape(x, (-1, *input_size)),
+                tf.reshape(y, (-1, 5))))
+    else:
+        dataset = dataset.map(stitch_patches, tf.data.experimental.AUTOTUNE)
+        if augment:
+            dataset = dataset.map(augmentation, tf.data.experimental.AUTOTUNE)
+        dataset = dataset.batch(batch_size)
 
     dataset = dataset.map(preprocess_input, tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     return dataset

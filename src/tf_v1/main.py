@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-#from efficientnet_norm import EfficientNetB0
-from tensorflow.keras.applications import DenseNet121
 import math
 from sklearn import model_selection, metrics
+
+from models.efficientnet_norm import EfficientNetB0 as Engine
 
 from config import Config
 from util import DataManager
@@ -13,7 +13,6 @@ from generator import get_dataset
 from model import NeuralNet, SingleGPUModel, MultiGPUModel
 
 
-#tf.config.set_visible_devices([], 'GPU')
 gpus = tf.config.experimental.list_physical_devices('GPU')
 num_gpus = len(gpus)
 if gpus:
@@ -48,7 +47,7 @@ units=Config.model.units
 dropout=Config.model.dropout
 activation=Config.model.activation
 
-train_data, valid_data = DataManager.get_train_data(fold)
+train_data, valid_data = DataManager.get_train_data(split=True)
 
 lr_steps_per_epoch=math.ceil(len(train_data) / Config.train.batch_size)
 
@@ -58,7 +57,8 @@ train_dataset = get_dataset(
     batch_size=batch_size,
     training=True,
     augment=True,
-    image_compression=False,
+    tta=1,
+    input_size=input_shape,
     buffer_size=8192,
     cache=False,
 )
@@ -69,7 +69,8 @@ valid_dataset = get_dataset(
     batch_size=batch_size,
     training=False,
     augment=False,
-    image_compression=False,
+    tta=1,
+    input_size=input_shape,
     buffer_size=1,
     cache=True,
 )
@@ -87,7 +88,7 @@ optimizer = get_optimizer(
 )
 
 model = NeuralNet(
-    engine=DenseNet121,
+    engine=Engine,
     input_shape=input_shape,
     units=units,
     dropout=dropout,

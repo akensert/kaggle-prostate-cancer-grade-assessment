@@ -24,15 +24,15 @@ class Config:
 
         tiff_level = 1 # onlt if tiff_format is Ture
         resize_ratio = 1
-        input_shape = (1280, 1280, 3)
+        input_shape = (1536, 1536, 3)
         patch_size = 256
-        sample_size = 25
-        preprocess_mode = 'torch'
+        sample_size = 36
+        preprocess_mode = 'float'
 
     class model:
-        units = [5]
-        dropout = [0.2]
-        activation = [None]
+        units = [512, 5]
+        dropout = [0.1, 0.1]
+        activation = ['relu', None]
 
     class train:
         seed = 42

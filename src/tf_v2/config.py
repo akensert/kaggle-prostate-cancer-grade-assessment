@@ -13,6 +13,7 @@ class Config:
             path += 'test_images/'
         else:
             path += 'train_images/'
+
         print("Path to images: ", path)
 
         # for convenience when uploaded to kaggle for submission/inference
@@ -20,6 +21,7 @@ class Config:
             tiff_format = False
         else:
             tiff_format = True
+
         print("Image tiff-format: ", tiff_format)
 
         tiff_level = 1 # onlt if tiff_format is Ture
