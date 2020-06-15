@@ -24,11 +24,7 @@ Download either of the following datasets (preferably (B)):<br>
 1. (A) https://www.kaggle.com/c/prostate-cancer-grade-assessment/data<br>
 or
 1. (B) https://www.kaggle.com/lopuhin/panda-2020-level-1-2<br>
-2. If (B), make sure to rename image filenames like this (Bash):
-```
-for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done
-```
-or change the image\_path in generator.py<br>
+2. If (B), make sure to rename image filenames like this (Bash): `for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done`<br>
 3. Put the csv-files and the image folder inside input/prostate-cancer-grade-assessment/
 
 ### Modeling
