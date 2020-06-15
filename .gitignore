@@ -7,8 +7,9 @@ src/tmp/
 *.h5
 *.h5py
 keras_v1/
+tmp/
 
-# jupyter 
+# jupyter
 MANIFEST
 build
 dist
