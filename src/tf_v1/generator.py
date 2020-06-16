@@ -206,6 +206,7 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
 def preprocess_input(x, y, mode=Config.input.preprocess_mode):
     x = tf.cast(x, dtype=tf.dtypes.float32)
     y = tf.cast(y, dtype=tf.dtypes.float32)
+    x = 255. - x
     if mode == 'tf':
         x /= 127.5
         x -= 1.

@@ -27,23 +27,29 @@ class Config:
         input_shape = (1536, 1536, 3)
         patch_size = 256
         sample_size = 36
+        ## inceptionv3 = 'tf'
+        ## resnet50 = 'caffe'
+        ## densenet121 = 'torch'
+        ## xception = 'tf'
+        ## inceptionresnet = 'tf'
+        ## efficientnet = 'torch' or 'float' or 'none'
         preprocess_mode = 'float'
 
     class model:
-        units = [512, 5]
-        dropout = [0.1, 0.1]
-        activation = ['relu', None]
+        units = [5]
+        dropout = [0.2]
+        activation = [None]
 
     class train:
-        seed = 42
+        random_state = 150
         fold = 0
-        epochs = 50
+        epochs = 30
         batch_size = 2
 
         class learning_rate:
             max = 1e-4
             min = 1e-5
-            decay_epochs = 50
+            decay_epochs = 30
             warmup_epochs = 1
             power = 1
 

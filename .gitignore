@@ -1,5 +1,6 @@
 _*/
 *.csv
+scores.txt
 *.jpeg
 *.png
 *.tiff

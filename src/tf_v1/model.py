@@ -14,7 +14,7 @@ class NeuralNet(tf.keras.Model):
         super(NeuralNet, self).__init__()
 
         self.engine = engine(
-            include_top = False,
+            include_top=False,
             input_shape=input_shape,
             weights=weights)
 
@@ -28,45 +28,65 @@ class NeuralNet(tf.keras.Model):
     def call(self, inputs, **kwargs):
         x = self.engine(inputs)
         x = self.pool(x)
-
         return self.head(x)
 
 
 class BaseModel(metaclass=ABCMeta):
 
     @abstractmethod
-    def __init__(self, keras_model, optimizer, strategy):
+    def __init__(self, keras_model, optimizer, strategy, mixed_precision):
         self.keras_model = keras_model
         if optimizer is not None:
-            self.optimizer = \
-                tf.keras.mixed_precision.experimental.LossScaleOptimizer(
-                    optimizer, loss_scale='dynamic')
+            if mixed_precision:
+                self.optimizer = \
+                    tf.keras.mixed_precision.experimental.LossScaleOptimizer(
+                        optimizer, loss_scale='dynamic')
+            else:
+                self.optimizer = optimizer
         if strategy is not None:
             self.strategy = strategy
             self.num_replicas_in_sync = self.strategy.num_replicas_in_sync
         else:
             self.num_replicas_in_sync = 1
+        self.mixed_precision = mixed_precision
 
         if not(os.path.isdir('output/weights')):
             os.makedirs('output/weights')
 
+
     def _train_step(self, inputs):
-        images, labels = inputs
-        with tf.GradientTape() as tape:
-            logits = self.keras_model(images, training=True)
-            cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=labels, logits=logits)
-            loss = (
-                tf.reduce_mean(cross_entropy)
-                * (1.0 / self.num_replicas_in_sync)
-            )
-            scaled_loss = self.optimizer.get_scaled_loss(loss)
-        scaled_gradients = tape.gradient(
-            scaled_loss, self.keras_model.trainable_variables)
-        gradients = self.optimizer.get_unscaled_gradients(scaled_gradients)
-        self.optimizer.apply_gradients(
-            zip(gradients, self.keras_model.trainable_variables))
-        return loss
+        if self.mixed_precision:
+            images, labels = inputs
+            with tf.GradientTape() as tape:
+                logits = self.keras_model(images, training=True)
+                cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(
+                    labels=labels, logits=logits)
+                loss = (
+                    tf.reduce_mean(cross_entropy)
+                    * (1.0 / self.num_replicas_in_sync)
+                )
+                scaled_loss = self.optimizer.get_scaled_loss(loss)
+            scaled_gradients = tape.gradient(
+                scaled_loss, self.keras_model.trainable_variables)
+            gradients = self.optimizer.get_unscaled_gradients(scaled_gradients)
+            self.optimizer.apply_gradients(
+                zip(gradients, self.keras_model.trainable_variables))
+            return loss
+        else:
+            images, labels = inputs
+            with tf.GradientTape() as tape:
+                logits = self.keras_model(images, training=True)
+                cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(
+                    labels=labels, logits=logits)
+                loss = (
+                    tf.reduce_mean(cross_entropy)
+                    * (1.0 / self.num_replicas_in_sync)
+                )
+            gradients = tape.gradient(
+                loss, self.keras_model.trainable_variables)
+            self.optimizer.apply_gradients(
+                zip(gradients, self.keras_model.trainable_variables))
+            return loss
 
     def _predict_step(self, inputs):
         images, labels = inputs
@@ -91,13 +111,14 @@ class BaseModel(metaclass=ABCMeta):
         return preds, trues
 
 
-class SingleGPUModel(BaseModel):
+class Model(BaseModel):
 
-    def __init__(self, keras_model, optimizer=None, strategy=None):
-        super(SingleGPUModel, self).__init__(
+    def __init__(self, keras_model, optimizer=None, strategy=None, mixed_precision=False):
+        super(Model, self).__init__(
             keras_model=keras_model,
             optimizer=optimizer,
-            strategy=strategy)
+            strategy=strategy,
+            mixed_precision=mixed_precision)
 
     def fit_and_predict(self, fold, epochs, train_ds, test_ds):
 
@@ -138,13 +159,14 @@ class SingleGPUModel(BaseModel):
                 )
 
 
-class MultiGPUModel(BaseModel):
+class DistributedModel(BaseModel):
 
-    def __init__(self, keras_model, optimizer=None, strategy=None):
-        super(MultiGPUModel, self).__init__(
+    def __init__(self, keras_model, optimizer=None, strategy=None, mixed_precision=False):
+        super(DistributedModel, self).__init__(
             keras_model=keras_model,
             optimizer=optimizer,
-            strategy=strategy)
+            strategy=strategy,
+            mixed_precision=mixed_precision)
 
     def fit_and_predict(self, fold, epochs, train_ds, test_ds):
 

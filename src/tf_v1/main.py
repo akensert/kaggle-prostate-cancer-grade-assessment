@@ -4,14 +4,14 @@ import tensorflow as tf
 import math
 from sklearn import model_selection, metrics
 
-from models.efficientnet_norm import EfficientNetB0 as Engine
+#from models.xception_norm import Xception as Engine
+from models.resnet_norm import ResNet50 as Engine
 
 from config import Config
 from util import DataManager
 from optimizer import get_optimizer
 from generator import get_dataset
-from model import NeuralNet, SingleGPUModel, MultiGPUModel
-
+from model import NeuralNet, DistributedModel, Model
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 num_gpus = len(gpus)
@@ -29,10 +29,19 @@ tf.keras.mixed_precision.experimental.set_policy(policy)
 print('Compute dtype: %s' % policy.compute_dtype)
 print('Variable dtype: %s' % policy.variable_dtype)
 
+if num_gpus == 0:
+    strategy = tf.distribute.OneDeviceStrategy(device='CPU')
+    print("Setting strategy to OneDeviceStrategy(device='CPU')")
+elif num_gpus == 1:
+    strategy = tf.distribute.OneDeviceStrategy(device='GPU')
+    print("Setting strategy to OneDeviceStrategy(device='GPU')")
+else:
+    strategy = tf.distribute.MirroredStrategy()
+    print("Setting strategy to MirroredStrategy()")
 
 input_shape = Config.input.input_shape
 input_path = Config.input.path
-seed = Config.train.seed
+random_state = Config.train.random_state
 fold = Config.train.fold
 batch_size = Config.train.batch_size
 epochs = Config.train.epochs
@@ -47,7 +56,8 @@ units=Config.model.units
 dropout=Config.model.dropout
 activation=Config.model.activation
 
-train_data, valid_data = DataManager.get_train_data(split=True)
+train_data, valid_data = DataManager.get_train_data(
+    split=True, random_state=random_state)
 
 lr_steps_per_epoch=math.ceil(len(train_data) / Config.train.batch_size)
 
@@ -75,29 +85,27 @@ valid_dataset = get_dataset(
     cache=True,
 )
 
-# strategy = tf.distribute.MirroredStrategy()
-# with strategy.scope():
+with strategy.scope():
 
-optimizer = get_optimizer(
-    steps_per_epoch=lr_steps_per_epoch,
-    lr_max=lr_max,
-    lr_min=lr_min,
-    decay_epochs=lr_decay_epochs,
-    warmup_epochs=lr_warmup_epochs,
-    power=lr_power
-)
+    optimizer = get_optimizer(
+        steps_per_epoch=lr_steps_per_epoch,
+        lr_max=lr_max,
+        lr_min=lr_min,
+        decay_epochs=lr_decay_epochs,
+        warmup_epochs=lr_warmup_epochs,
+        power=lr_power
+    )
 
-model = NeuralNet(
-    engine=Engine,
-    input_shape=input_shape,
-    units=units,
-    dropout=dropout,
-    activation=activation,
-    weights='imagenet')
-model.build([None, *input_shape])
+    model = NeuralNet(
+        engine=Engine,
+        input_shape=input_shape,
+        units=units,
+        dropout=dropout,
+        activation=activation,
+        weights="imagenet")
 
-# multi_gpu_model = MultiGPUModel(model, optimizer, strategy=strategy)
-# multi_gpu_model.fit_and_predict(fold, epochs, train_dataset, valid_dataset)
+    model.build([None, *input_shape])
 
-single_gpu_model = SingleGPUModel(model, optimizer, strategy=None)
-single_gpu_model.fit_and_predict(fold, epochs, train_dataset, valid_dataset)
+    dist_model = DistributedModel(
+        model, optimizer, strategy=strategy, mixed_precision=True)
+    dist_model.fit_and_predict(fold, epochs, train_dataset, valid_dataset)
