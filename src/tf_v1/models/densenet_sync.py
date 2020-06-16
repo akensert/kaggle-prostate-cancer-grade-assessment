@@ -53,7 +53,7 @@ def transition_block(x, reduction, name):
   """
   bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_bn')(
+      axis=bn_axis, name=name + '_bn')(
           x)
   x = layers.Activation('relu', name=name + '_relu')(x)
   x = layers.Conv2D(
@@ -77,14 +77,14 @@ def conv_block(x, growth_rate, name):
   """
   bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
   x1 = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_0_bn')(
+      axis=bn_axis, name=name + '_0_bn')(
           x)
   x1 = layers.Activation('relu', name=name + '_0_relu')(x1)
   x1 = layers.Conv2D(
       4 * growth_rate, 1, use_bias=False, name=name + '_1_conv')(
           x1)
   x1 = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_1_bn')(
+      axis=bn_axis, name=name + '_1_bn')(
           x1)
   x1 = layers.Activation('relu', name=name + '_1_relu')(x1)
   x1 = layers.Conv2D(
@@ -184,7 +184,7 @@ def DenseNet(
   x = layers.ZeroPadding2D(padding=((3, 3), (3, 3)))(img_input)
   x = layers.Conv2D(64, 7, strides=2, use_bias=False, name='conv1/conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name='conv1/bn')(
+      axis=bn_axis, name='conv1/bn')(
           x)
   x = layers.Activation('relu', name='conv1/relu')(x)
   x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)))(x)
@@ -198,7 +198,7 @@ def DenseNet(
   x = transition_block(x, 0.5, name='pool4')
   x = dense_block(x, blocks[3], name='conv5')
 
-  x = layers.normalization_v2.SyncBatchNormalization(axis=bn_axis, epsilon=1.001e-5, name='bn')(x)
+  x = layers.normalization_v2.SyncBatchNormalization(axis=bn_axis, name='bn')(x)
   x = layers.Activation('relu', name='relu')(x)
 
   if include_top:

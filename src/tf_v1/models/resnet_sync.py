@@ -136,7 +136,7 @@ def ResNet(stack_fn,
 
   if not preact:
     x = layers.normalization_v2.SyncBatchNormalization(
-        axis=bn_axis, epsilon=1.001e-5, name='conv1_bn')(x)
+        axis=bn_axis, name='conv1_bn')(x)
     x = layers.Activation('relu', name='conv1_relu')(x)
 
   x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name='pool1_pad')(x)
@@ -146,7 +146,7 @@ def ResNet(stack_fn,
 
   if preact:
     x = layers.normalization_v2.SyncBatchNormalization(
-        axis=bn_axis, epsilon=1.001e-5, name='post_bn')(x)
+        axis=bn_axis, name='post_bn')(x)
     x = layers.Activation('relu', name='post_relu')(x)
 
   if include_top:
@@ -209,24 +209,24 @@ def block1(x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None):
     shortcut = layers.Conv2D(
         4 * filters, 1, strides=stride, name=name + '_0_conv')(x)
     shortcut = layers.normalization_v2.SyncBatchNormalization(
-        axis=bn_axis, epsilon=1.001e-5, name=name + '_0_bn')(shortcut)
+        axis=bn_axis, name=name + '_0_bn')(shortcut)
   else:
     shortcut = x
 
   x = layers.Conv2D(filters, 1, strides=stride, name=name + '_1_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_1_bn')(x)
+      axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
   x = layers.Conv2D(
       filters, kernel_size, padding='SAME', name=name + '_2_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_2_bn')(x)
+      axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
   x = layers.Conv2D(4 * filters, 1, name=name + '_3_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_3_bn')(x)
+      axis=bn_axis, name=name + '_3_bn')(x)
 
   x = layers.Add(name=name + '_add')([shortcut, x])
   x = layers.Activation('relu', name=name + '_out')(x)
@@ -266,7 +266,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
   bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
 
   preact = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_preact_bn')(x)
+      axis=bn_axis, name=name + '_preact_bn')(x)
   preact = layers.Activation('relu', name=name + '_preact_relu')(preact)
 
   if conv_shortcut:
@@ -278,7 +278,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
   x = layers.Conv2D(
       filters, 1, strides=1, use_bias=False, name=name + '_1_conv')(preact)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_1_bn')(x)
+      axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
   x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name=name + '_2_pad')(x)
@@ -289,7 +289,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
       use_bias=False,
       name=name + '_2_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_2_bn')(x)
+      axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
   x = layers.Conv2D(4 * filters, 1, name=name + '_3_conv')(x)
@@ -345,13 +345,13 @@ def block3(x,
         use_bias=False,
         name=name + '_0_conv')(x)
     shortcut = layers.normalization_v2.SyncBatchNormalization(
-        axis=bn_axis, epsilon=1.001e-5, name=name + '_0_bn')(shortcut)
+        axis=bn_axis, name=name + '_0_bn')(shortcut)
   else:
     shortcut = x
 
   x = layers.Conv2D(filters, 1, use_bias=False, name=name + '_1_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_1_bn')(x)
+      axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
   c = filters // groups
@@ -369,13 +369,13 @@ def block3(x,
       name=name + '_2_reduce')(x)
   x = layers.Reshape(x_shape + (filters,))(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_2_bn')(x)
+      axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
   x = layers.Conv2D(
       (64 // groups) * filters, 1, use_bias=False, name=name + '_3_conv')(x)
   x = layers.normalization_v2.SyncBatchNormalization(
-      axis=bn_axis, epsilon=1.001e-5, name=name + '_3_bn')(x)
+      axis=bn_axis, name=name + '_3_bn')(x)
 
   x = layers.Add(name=name + '_add')([shortcut, x])
   x = layers.Activation('relu', name=name + '_out')(x)

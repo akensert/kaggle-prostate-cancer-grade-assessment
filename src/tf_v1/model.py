@@ -180,9 +180,10 @@ class DistributedModel(BaseModel):
         @tf.function
         def distributed_predict_step(inputs):
             probs, labels = self.strategy.run(self._predict_step, args=(inputs,))
-            probs = probs.values
-            labels = labels.values
-            return probs, labels
+            if tf.is_tensor(probs):
+                return [probs], [labels]
+            else:
+                return probs.values, labels.values
 
         score = 0.
         best_score = 0.
