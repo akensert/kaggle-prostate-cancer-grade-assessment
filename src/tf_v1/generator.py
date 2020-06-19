@@ -203,21 +203,10 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
     return image, label
 
 @tf.function
-def preprocess_input(x, y,
-                     mode=Config.input.preprocess_mode,
-                     objective=Config.input.objective,
-                     label_smoothing=Config.input.label_smoothing):
+def preprocess_input(x, y, mode=Config.input.preprocess_mode):
 
     x = tf.cast(x, dtype=tf.dtypes.float32)
     y = tf.cast(y, dtype=tf.dtypes.float32)
-
-    if label_smoothing > 0.0:
-        if objective == 'mse':
-            pass
-        elif objective == 'bc':
-            y = y * (1 - label_smoothing) + 0.5 * label_smoothing
-        else:
-            pass
     #x = 255. - x
     if mode == 'tf':
         x /= 127.5
@@ -248,7 +237,7 @@ def get_dataset(dataframe,
                 augment,
                 tta=1,
                 input_size=(1536, 1536, 3),
-                objective='bc',
+                objective='bce',
                 buffer_size=1,
                 cache=False):
 
@@ -278,12 +267,12 @@ def get_dataset(dataframe,
     if objective == 'mse':
         labels = dataframe.isup_grade.values.astype(np.int32)
         labels = np.expand_dims(labels, 1)
-    elif objective == 'bc':
+    elif objective == 'bce':
         labels = np.zeros((len(dataframe), 5), dtype=np.int32)
         for i, label in enumerate(dataframe.isup_grade):
-            labels[i, :label] = 1.
+            labels[i, :label] = 1
     else:
-        raise ValueError("objective has to be either 'mse' or 'bc'")
+        raise ValueError("objective has to be either 'mse' or 'bce'")
 
     dataset = tf.data.Dataset.from_tensor_slices((image_paths, labels))
     dataset = dataset.shuffle(buffer_size)

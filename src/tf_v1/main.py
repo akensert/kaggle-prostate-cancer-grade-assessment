@@ -59,7 +59,7 @@ dropout=Config.model.dropout
 activation=Config.model.activation
 
 train_data, valid_data = DataManager.get_train_data(
-    split=True, random_state=random_state)
+    split=True, random_state=random_state, add_image_size_info=True)
 
 lr_steps_per_epoch=math.ceil(len(train_data) / Config.train.batch_size)
 
@@ -112,6 +112,10 @@ with strategy.scope():
 
     dist_model = DistributedModel(
         model, optimizer, strategy=strategy, mixed_precision=True,
-        objective=Config.input.objective)
+        objective=Config.input.objective, label_smoothing=Config.input.label_smoothing)
 
-    dist_model.fit_and_predict(fold, epochs, train_dataset, valid_dataset)
+    dist_model.fit_and_predict(
+        fold, epochs, train_dataset, valid_dataset,
+        data_provider=valid_data.data_provider,
+        image_size=valid_data.image_size,
+        )

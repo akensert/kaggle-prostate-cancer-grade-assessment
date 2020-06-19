@@ -27,16 +27,9 @@ class Config:
         input_shape = (1536, 1536, 3)
         patch_size = 256
         sample_size = 36
-
-        ## inceptionv3 = 'tf'
-        ## resnet50 = 'caffe'
-        ## densenet121 = 'torch'
-        ## xception = 'tf'
-        ## inceptionresnet = 'tf'
-        ## efficientnet = 'torch' or 'float' or 'none'
         preprocess_mode = 'float'
-        label_smoothing = 0.0
         objective = 'mse'
+        label_smoothing = 0.0 # only if objective is 'bce'
 
     class model:
         units = [1]

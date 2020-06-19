@@ -28,9 +28,15 @@ class DataManager:
         return path
 
     @classmethod
-    def get_train_data(cls, split=False, test_size=0.2, random_state=42):
+    def get_train_data(cls, split=False, test_size=0.2, random_state=42, add_image_size_info=False):
         if os.path.isfile(cls.get_path() + 'train.csv'):
             data = pd.read_csv(cls.get_path() + 'train.csv')
+            if add_image_size_info:
+                image_size = {}
+                for f in os.listdir(cls.get_path() + 'train_images/'):
+                    fp = os.path.join(cls.get_path() + 'train_images/', f)
+                    image_size[f[:-5]] = round(os.path.getsize(fp) * (1/1_000_000), 3)
+                data['image_size'] = data.image_id.map(image_size)
             if split:
                 return _advanced_split(data, test_size, random_state)
             else:
