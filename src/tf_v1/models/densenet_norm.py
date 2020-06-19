@@ -1,3 +1,15 @@
+"""
+Reference:
+    https://www.tensorflow.org/api_docs/python/tf/keras/applications
+Github repo:
+    https://github.com/tensorflow/tensorflow/tree/v2.2.0/tensorflow/python/keras/applications
+Credits to:
+    TensorFlow
+This script:
+    Slightly modified from the original
+"""
+
+
 import os
 
 from tensorflow.python.keras import backend

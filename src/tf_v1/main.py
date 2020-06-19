@@ -5,7 +5,8 @@ import math
 from sklearn import model_selection, metrics
 
 #from models.xception_norm import Xception as Engine
-from models.resnet_norm import ResNet50 as Engine
+from models.inception_norm import InceptionV3 as Engine
+#from models.mixnet_norm import MixNetSmall as Engine
 
 from config import Config
 from util import DataManager
@@ -39,6 +40,7 @@ else:
     strategy = tf.distribute.MirroredStrategy()
     print("Setting strategy to MirroredStrategy()")
 
+objective = Config.input.objective
 input_shape = Config.input.input_shape
 input_path = Config.input.path
 random_state = Config.train.random_state
@@ -69,6 +71,7 @@ train_dataset = get_dataset(
     augment=True,
     tta=1,
     input_size=input_shape,
+    objective=objective,
     buffer_size=8192,
     cache=False,
 )
@@ -81,6 +84,7 @@ valid_dataset = get_dataset(
     augment=False,
     tta=1,
     input_size=input_shape,
+    objective=objective,
     buffer_size=1,
     cache=True,
 )
@@ -107,5 +111,7 @@ with strategy.scope():
     model.build([None, *input_shape])
 
     dist_model = DistributedModel(
-        model, optimizer, strategy=strategy, mixed_precision=True)
+        model, optimizer, strategy=strategy, mixed_precision=True,
+        objective=Config.input.objective)
+
     dist_model.fit_and_predict(fold, epochs, train_dataset, valid_dataset)

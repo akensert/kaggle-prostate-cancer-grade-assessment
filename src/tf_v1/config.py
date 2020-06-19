@@ -27,6 +27,7 @@ class Config:
         input_shape = (1536, 1536, 3)
         patch_size = 256
         sample_size = 36
+
         ## inceptionv3 = 'tf'
         ## resnet50 = 'caffe'
         ## densenet121 = 'torch'
@@ -34,14 +35,16 @@ class Config:
         ## inceptionresnet = 'tf'
         ## efficientnet = 'torch' or 'float' or 'none'
         preprocess_mode = 'float'
+        label_smoothing = 0.0
+        objective = 'mse'
 
     class model:
-        units = [5]
+        units = [1]
         dropout = [0.2]
         activation = [None]
 
     class train:
-        random_state = 150
+        random_state = 102
         fold = 0
         epochs = 30
         batch_size = 2

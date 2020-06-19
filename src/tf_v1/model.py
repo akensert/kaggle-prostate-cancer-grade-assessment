@@ -34,7 +34,8 @@ class NeuralNet(tf.keras.Model):
 class BaseModel(metaclass=ABCMeta):
 
     @abstractmethod
-    def __init__(self, keras_model, optimizer, strategy, mixed_precision):
+    def __init__(self, keras_model, optimizer, strategy,
+                 mixed_precision, objective):
         self.keras_model = keras_model
         if optimizer is not None:
             if mixed_precision:
@@ -50,6 +51,18 @@ class BaseModel(metaclass=ABCMeta):
             self.num_replicas_in_sync = 1
         self.mixed_precision = mixed_precision
 
+        if objective == 'mse':
+            self.loss_fn = tf.keras.losses.MeanSquaredError(
+                reduction=tf.keras.losses.Reduction.NONE)
+        elif objective == 'bc':
+            self.loss_fn = tf.keras.losses.BinaryCrossentropy(
+                from_logits=True,
+                reduction=tf.keras.losses.Reduction.NONE)
+        else:
+            raise ValueError("objective has to be either 'mse' or 'bc'")
+
+        self.objective = objective
+
         if not(os.path.isdir('output/weights')):
             os.makedirs('output/weights')
 
@@ -59,10 +72,8 @@ class BaseModel(metaclass=ABCMeta):
             images, labels = inputs
             with tf.GradientTape() as tape:
                 logits = self.keras_model(images, training=True)
-                cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(
-                    labels=labels, logits=logits)
                 loss = (
-                    tf.reduce_mean(cross_entropy)
+                    tf.reduce_mean(self.loss_fn(labels, logits))
                     * (1.0 / self.num_replicas_in_sync)
                 )
                 scaled_loss = self.optimizer.get_scaled_loss(loss)
@@ -76,10 +87,8 @@ class BaseModel(metaclass=ABCMeta):
             images, labels = inputs
             with tf.GradientTape() as tape:
                 logits = self.keras_model(images, training=True)
-                cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(
-                    labels=labels, logits=logits)
                 loss = (
-                    tf.reduce_mean(cross_entropy)
+                    tf.reduce_mean(self.loss_fn(labels, logits))
                     * (1.0 / self.num_replicas_in_sync)
                 )
             gradients = tape.gradient(
@@ -91,34 +100,37 @@ class BaseModel(metaclass=ABCMeta):
     def _predict_step(self, inputs):
         images, labels = inputs
         logits = self.keras_model(images, training=False)
-        probs = tf.math.sigmoid(logits)
-        return probs, labels
+        if self.objective == 'bc':
+            return tf.math.sigmoid(logits), labels
+        return logits, labels
 
     def inference(self, test_ds, weights=None, return_probs=False):
         print("Inference will be done without tf.distribute.strategy")
         self.keras_model.load_weights(weights)
         self._predict_step = tf.function(self._predict_step)
         test_ds = tqdm.tqdm(test_ds)
-        preds, trues = list(), list()
+        preds_list, trues_list = list(), list()
         for inputs in test_ds:
-            probs, labels = self._predict_step(inputs)
-            if return_probs:
-                preds.extend(probs.numpy().tolist())
-                trues.extend(labels.numpy().tolist())
+            preds, labels = self._predict_step(inputs)
+            if return_probs and self.objective == 'bc':
+                preds_list.extend(preds.numpy().tolist())
+                trues_list.extend(labels.numpy().tolist())
             else:
-                preds.extend(tf.reduce_sum(probs, -1).numpy().tolist())
-                trues.extend(tf.reduce_sum(labels, -1).numpy().tolist())
-        return preds, trues
+                preds_list.extend(tf.reduce_sum(preds, -1).numpy().tolist())
+                trues_list.extend(tf.reduce_sum(labels, -1).numpy().tolist())
+        return preds_list, trues_list
 
 
 class Model(BaseModel):
 
-    def __init__(self, keras_model, optimizer=None, strategy=None, mixed_precision=False):
+    def __init__(self, keras_model, optimizer=None, strategy=None,
+                 mixed_precision=False, objective='bc'):
         super(Model, self).__init__(
             keras_model=keras_model,
             optimizer=optimizer,
             strategy=strategy,
-            mixed_precision=mixed_precision)
+            mixed_precision=mixed_precision,
+            objective=objective)
 
     def fit_and_predict(self, fold, epochs, train_ds, test_ds):
 
@@ -137,15 +149,16 @@ class Model(BaseModel):
                 train_ds.set_description(
                   "Score {:.6f} : Loss {:.6f}".format(score, epoch_loss/(i+1)))
 
-            preds, trues = list(), list()
+            preds_list, trues_list = list(), list()
             for inputs in test_ds:
-                probs, labels = self._predict_step(inputs)
-                preds.extend(tf.reduce_sum(probs, -1).numpy().tolist())
-                trues.extend(tf.reduce_sum(labels, -1).numpy().tolist())
+                preds, labels = self._predict_step(inputs)
+                preds_list.extend(tf.reduce_sum(preds, -1).numpy().tolist())
+                trues_list.extend(tf.reduce_sum(labels, -1).numpy().tolist())
 
-            preds = np.round(preds, 0)
-            trues = np.round(trues, 0)
-            score = metrics.cohen_kappa_score(trues, preds, weights='quadratic')
+            preds_list = np.round(preds_list, 0)
+            trues_list = np.round(trues_list, 0)
+            score = metrics.cohen_kappa_score(
+                trues_list, preds_list, weights='quadratic')
 
             if score > best_score:
                 best_score = score
@@ -161,12 +174,14 @@ class Model(BaseModel):
 
 class DistributedModel(BaseModel):
 
-    def __init__(self, keras_model, optimizer=None, strategy=None, mixed_precision=False):
+    def __init__(self, keras_model, optimizer=None, strategy=None,
+                 mixed_precision=False, objective='bc'):
         super(DistributedModel, self).__init__(
             keras_model=keras_model,
             optimizer=optimizer,
             strategy=strategy,
-            mixed_precision=mixed_precision)
+            mixed_precision=mixed_precision,
+            objective=objective)
 
     def fit_and_predict(self, fold, epochs, train_ds, test_ds):
 
@@ -199,16 +214,17 @@ class DistributedModel(BaseModel):
                 train_dist_ds.set_description(
                   "Score {:.6f} : Loss {:.6f}".format(score, epoch_loss/(i+1)))
 
-            preds, trues = list(), list()
+            preds_list, trues_list = list(), list()
             for inputs in test_dist_ds:
-                probs, labels = distributed_predict_step(inputs)
-                for prob, label in zip(probs, labels):
-                    preds.extend(tf.reduce_sum(prob, -1).numpy().tolist())
-                    trues.extend(tf.reduce_sum(label, -1).numpy().tolist())
+                preds, labels = distributed_predict_step(inputs)
+                for pred, label in zip(preds, labels):
+                    preds_list.extend(tf.reduce_sum(pred, -1).numpy().tolist())
+                    trues_list.extend(tf.reduce_sum(label, -1).numpy().tolist())
 
-            preds = np.round(preds, 0)
-            trues = np.round(trues, 0)
-            score = metrics.cohen_kappa_score(trues, preds, weights='quadratic')
+            preds_list = np.round(preds_list, 0)
+            trues_list = np.round(trues_list, 0)
+            score = metrics.cohen_kappa_score(
+                trues_list, preds_list, weights='quadratic')
 
             if score > best_score:
                 best_score = score

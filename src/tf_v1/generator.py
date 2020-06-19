@@ -203,10 +203,22 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
     return image, label
 
 @tf.function
-def preprocess_input(x, y, mode=Config.input.preprocess_mode):
+def preprocess_input(x, y,
+                     mode=Config.input.preprocess_mode,
+                     objective=Config.input.objective,
+                     label_smoothing=Config.input.label_smoothing):
+
     x = tf.cast(x, dtype=tf.dtypes.float32)
     y = tf.cast(y, dtype=tf.dtypes.float32)
-    x = 255. - x
+
+    if label_smoothing > 0.0:
+        if objective == 'mse':
+            pass
+        elif objective == 'bc':
+            y = y * (1 - label_smoothing) + 0.5 * label_smoothing
+        else:
+            pass
+    #x = 255. - x
     if mode == 'tf':
         x /= 127.5
         x -= 1.
@@ -228,6 +240,7 @@ def preprocess_input(x, y, mode=Config.input.preprocess_mode):
     else:
         return x, y
 
+
 def get_dataset(dataframe,
                 input_path,
                 batch_size,
@@ -235,6 +248,7 @@ def get_dataset(dataframe,
                 augment,
                 tta=1,
                 input_size=(1536, 1536, 3),
+                objective='bc',
                 buffer_size=1,
                 cache=False):
 
@@ -260,9 +274,16 @@ def get_dataset(dataframe,
             cache_path = '../tmp/cache_infer'
 
     image_paths = (input_path + dataframe.image_id).values.astype(str)
-    labels = np.zeros((len(dataframe), 5), dtype=np.int32)
-    for i, label in enumerate(dataframe.isup_grade):
-        labels[i, :label] = 1.
+
+    if objective == 'mse':
+        labels = dataframe.isup_grade.values.astype(np.int32)
+        labels = np.expand_dims(labels, 1)
+    elif objective == 'bc':
+        labels = np.zeros((len(dataframe), 5), dtype=np.int32)
+        for i, label in enumerate(dataframe.isup_grade):
+            labels[i, :label] = 1.
+    else:
+        raise ValueError("objective has to be either 'mse' or 'bc'")
 
     dataset = tf.data.Dataset.from_tensor_slices((image_paths, labels))
     dataset = dataset.shuffle(buffer_size)
