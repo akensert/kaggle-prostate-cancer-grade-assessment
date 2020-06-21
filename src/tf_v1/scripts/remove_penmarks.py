@@ -9,6 +9,7 @@ import os
 import cv2
 import sys
 import multiprocessing
+Image.MAX_IMAGE_PIXELS = 5000000000
 
 sys.path.append('../')
 
@@ -19,7 +20,7 @@ def mask_penmarks(image_rgb,
                   kernel_size=(5, 5),
                   r_threshold=220,
                   r_std_multiplier=0.25,
-                  contour_threshold=64):
+                  contour_threshold=Config.input.patch_size//4):
 
     # Define elliptic kernel
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, kernel_size)

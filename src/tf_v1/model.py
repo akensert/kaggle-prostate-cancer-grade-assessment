@@ -58,8 +58,12 @@ class BaseModel(metaclass=ABCMeta):
             self.loss_fn = tf.keras.losses.BinaryCrossentropy(
                 from_logits=True,
                 reduction=tf.keras.losses.Reduction.NONE)
+        elif objective == 'cce':
+            self.loss_fn = tf.keras.losses.CategoricalCrossentropy(
+                from_logits=True,
+                reduction=tf.keras.losses.Reduction.NONE)
         else:
-            raise ValueError("objective has to be either 'mse' or 'bce'")
+            raise ValueError("objective has to be either 'mse', 'bce' or 'cce'")
 
         self.objective = objective
         self.label_smoothing = label_smoothing
@@ -72,11 +76,11 @@ class BaseModel(metaclass=ABCMeta):
 
         images, labels = inputs
 
-        # if self.label_smoothing > 0.0 and self.objective == 'cce':
-        #     labels = (
-        #         labels * (1 - self.label_smoothing)
-        #         + 0.5 * self.label_smoothing
-        #     )
+        if self.label_smoothing > 0.0 and self.objective == 'cce':
+            labels = (
+                labels * (1 - self.label_smoothing)
+                + 0.5 * self.label_smoothing
+            )
 
         if self.mixed_precision:
             with tf.GradientTape() as tape:
@@ -110,6 +114,8 @@ class BaseModel(metaclass=ABCMeta):
         logits = self.keras_model(images, training=False)
         if self.objective == 'bce':
             return tf.math.sigmoid(logits), labels
+        elif self.objective == 'cce':
+            return tf.nn.softmax(logits), labels
         return logits, labels
 
     def inference(self, test_ds, weights=None, return_probs=False):
@@ -120,9 +126,12 @@ class BaseModel(metaclass=ABCMeta):
         preds_list, trues_list = list(), list()
         for inputs in test_ds:
             preds, labels = self._predict_step(inputs)
-            if return_probs and self.objective == 'bce':
+            if return_probs and (self.objective == 'bce' or self.objective == 'cce'):
                 preds_list.extend(preds.numpy().tolist())
                 trues_list.extend(labels.numpy().tolist())
+            elif self.objective == 'cce':
+                preds_list.extend(tf.math.argmax(preds, -1).numpy().tolist())
+                trues_list.extend(tf.math.argmax(labels, -1).numpy().tolist())
             else:
                 preds_list.extend(tf.reduce_sum(preds, -1).numpy().tolist())
                 trues_list.extend(tf.reduce_sum(labels, -1).numpy().tolist())
@@ -161,11 +170,17 @@ class Model(BaseModel):
             preds_list, trues_list = list(), list()
             for inputs in test_ds:
                 preds, labels = self._predict_step(inputs)
-                preds_list.extend(tf.reduce_sum(preds, -1).numpy().tolist())
-                trues_list.extend(tf.reduce_sum(labels, -1).numpy().tolist())
+                if self.objective == 'cce':
+                    preds_list.extend(tf.math.argmax(preds, -1).numpy().tolist())
+                    trues_list.extend(tf.math.argmax(labels, -1).numpy().tolist())
+                else:
+                    preds_list.extend(tf.reduce_sum(preds, -1).numpy().tolist())
+                    trues_list.extend(tf.reduce_sum(labels, -1).numpy().tolist())
 
-            preds_list = np.clip(np.round(preds_list, 0), 0, 5)
-            trues_list = np.clip(np.round(trues_list, 0), 0, 5)
+            if self.objective != 'cce':
+                preds_list = np.clip(np.round(preds_list, 0), 0, 5)
+                trues_list = np.clip(np.round(trues_list, 0), 0, 5)
+
             score = metrics.cohen_kappa_score(
                 trues_list, preds_list, weights='quadratic')
 
@@ -229,11 +244,16 @@ class DistributedModel(BaseModel):
             for inputs in test_dist_ds:
                 preds, labels = distributed_predict_step(inputs)
                 for pred, label in zip(preds, labels):
-                    preds_list.extend(tf.reduce_sum(pred, -1).numpy().tolist())
-                    trues_list.extend(tf.reduce_sum(label, -1).numpy().tolist())
+                    if self.objective == 'cce':
+                        preds_list.extend(tf.math.argmax(pred, -1).numpy().tolist())
+                        trues_list.extend(tf.math.argmax(label, -1).numpy().tolist())
+                    else:
+                        preds_list.extend(tf.reduce_sum(pred, -1).numpy().tolist())
+                        trues_list.extend(tf.reduce_sum(label, -1).numpy().tolist())
 
-            preds_list = np.clip(np.round(preds_list, 0), 0, 5)
-            trues_list = np.clip(np.round(trues_list, 0), 0, 5)
+            if self.objective != 'cce':
+                preds_list = np.clip(np.round(preds_list, 0), 0, 5)
+                trues_list = np.clip(np.round(trues_list, 0), 0, 5)
 
             if data_provider is not None:
                 small_idx = np.where(

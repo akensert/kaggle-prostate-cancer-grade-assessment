@@ -8,44 +8,43 @@ class Config:
     class input:
 
         path = DataManager.get_path()
-        # for convenience when uploaded to kaggle for submission/inference
+
         if os.path.exists(path + 'test_images/'):
             path += 'test_images/'
         else:
             path += 'train_images/'
         print("Path to images: ", path)
 
-        # for convenience when uploaded to kaggle for submission/inference
         if glob.glob(path+'*.jpeg'):
             tiff_format = False
         else:
             tiff_format = True
         print("Image tiff-format: ", tiff_format)
 
-        tiff_level = 1 # onlt if tiff_format is Ture
-        resize_ratio = 1
+        tiff_level = 1                      # only if tiff_format is Ture
+        resize_ratio = 1                    # only if tiff_format is True
         input_shape = (1536, 1536, 3)
         patch_size = 256
         sample_size = 36
         preprocess_mode = 'float'
-        objective = 'mse'
-        label_smoothing = 0.0 # only if objective is 'bce'
+        objective = 'cce'
+        label_smoothing = 0.2               # only if objective is 'cce'
 
     class model:
-        units = [1]
+        units = [6]    # output dim should be [5] for 'bce', [6] for 'cce', or [1] for 'mse'
         dropout = [0.2]
         activation = [None]
 
     class train:
         random_state = 102
         fold = 0
-        epochs = 30
+        epochs = 20
         batch_size = 2
 
         class learning_rate:
             max = 1e-4
             min = 1e-5
-            decay_epochs = 30
+            decay_epochs = 20
             warmup_epochs = 1
             power = 1
 

@@ -12,7 +12,6 @@ Image.MAX_IMAGE_PIXELS = 5000000000
 from albumentations import *
 import albumentations.augmentations.functional as F
 
-
 from config import Config
 
 def map_decorator(func):
@@ -80,12 +79,13 @@ def augmentation(image, label):
     image = augmentor(image=image.numpy())['image']
     return image, label
 
-@map_decorator
-def jpeg_compression(image, label):
-    buffer = io.BytesIO()
-    Image.fromarray(image.numpy()).save(buffer, format='jpeg', quality=90)
-    image = np.array(Image.open(buffer))
-    return image, label#F.image_compression(image, quality=90, image_type='.jpg')
+# @map_decorator
+# def jpeg_compression(image, label):
+#     buffer = io.BytesIO()
+#     Image.fromarray(image.numpy()).save(buffer, format='jpeg', quality=90)
+#     image = np.array(Image.open(buffer))
+#     return image, label
+#     # return F.image_compression(image, quality=90, image_type='.jpg')
 
 if Config.input.tiff_format:
 
@@ -115,16 +115,10 @@ if Config.input.tiff_format:
         return image, label
 else:
     @map_decorator
-    def read_image(image_path, label, resize_ratio=Config.input.resize_ratio):
+    def read_image(image_path, label):
         image_path = image_path.numpy().decode('utf-8')
-        # image = cv2.imread(image_path + '.jpeg')
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = Image.open(image_path + '.jpeg')
         image = np.array(image)
-        if resize_ratio != 1:
-            new_w = int(image.shape[1]*resize_ratio)
-            new_h = int(image.shape[0]*resize_ratio)
-            image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
         return image, label
 
 @tf.function
@@ -168,10 +162,9 @@ def compute_patches(image, label, ps=Config.input.patch_size, ss=Config.input.sa
     image = tf.gather(image, indices)
     return image, label
 
-def _patch_augment(patch):
+def _patch_augment(patch, p=0.5):
     """Performs random rotation, random flip (u/d, l/r),
     and random transpose, based on probability p"""
-    p = 0.5
     r1 = tf.random.uniform(
         shape=(4,), minval=0, maxval=1)
     r2 = tf.random.uniform(
@@ -204,7 +197,6 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
 
 @tf.function
 def preprocess_input(x, y, mode=Config.input.preprocess_mode):
-
     x = tf.cast(x, dtype=tf.dtypes.float32)
     y = tf.cast(y, dtype=tf.dtypes.float32)
     #x = 255. - x
@@ -271,8 +263,11 @@ def get_dataset(dataframe,
         labels = np.zeros((len(dataframe), 5), dtype=np.int32)
         for i, label in enumerate(dataframe.isup_grade):
             labels[i, :label] = 1
+    elif objective == 'cce':
+        labels = dataframe.isup_grade.values
+        labels = np.eye(6)[labels].astype(np.int32)
     else:
-        raise ValueError("objective has to be either 'mse' or 'bce'")
+        raise ValueError("objective has to be either 'mse', 'bce' or 'cce'")
 
     dataset = tf.data.Dataset.from_tensor_slices((image_paths, labels))
     dataset = dataset.shuffle(buffer_size)
