@@ -255,7 +255,7 @@ class DistributedModel(BaseModel):
                 preds_list = np.clip(np.round(preds_list, 0), 0, 5)
                 trues_list = np.clip(np.round(trues_list, 0), 0, 5)
 
-            if data_provider is not None:
+            if image_size is not None:
                 small_idx = np.where(
                      image_size <= 0.75)[0]
                 medium_idx = np.where(
