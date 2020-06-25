@@ -27,11 +27,11 @@ class Config:
         patch_size = 256
         sample_size = 36
         preprocess_mode = 'float'
-        objective = 'cce'
-        label_smoothing = 0.2               # only if objective is 'cce'
+        objective = 'bce'
+        label_smoothing = 0.0               # only if objective is 'cce'
 
     class model:
-        units = [6]    # output dim should be [5] for 'bce', [6] for 'cce', or [1] for 'mse'
+        units = [5]    # output dim should be [5] for 'bce', [6] for 'cce', or [1] for 'mse'
         dropout = [0.2]
         activation = [None]
 
@@ -42,8 +42,8 @@ class Config:
         batch_size = 2
 
         class learning_rate:
-            max = 1e-4
-            min = 1e-5
+            max = 3e-4
+            min = 3e-5
             decay_epochs = 20
             warmup_epochs = 1
             power = 1

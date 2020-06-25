@@ -14,6 +14,7 @@ import albumentations.augmentations.functional as F
 
 from config import Config
 
+
 def map_decorator(func):
     def wrapper(*args):
         return tf.py_function(
@@ -23,7 +24,7 @@ def map_decorator(func):
         )
     return wrapper
 
-augmentor = (
+augmentor_heavy = (
     Compose([
       # OneOf([
       #   ShiftScaleRotate(
@@ -32,7 +33,7 @@ augmentor = (
       #       rotate_limit=90,
       #       p=0.5),
       #   ElasticTransform(
-      #       alpha=601,
+      #       alpha=801,
       #       sigma=25,
       #       alpha_affine=10,
       #       p=0.5),
@@ -74,18 +75,27 @@ augmentor = (
    ])
 )
 
+augmentor_light = (
+    Compose([
+      RandomRotate90(
+          p=0.5),
+      Flip(
+          p=0.5),
+      Transpose(
+          p=0.5),
+   ])
+)
+
+
 @map_decorator
-def augmentation(image, label):
-    image = augmentor(image=image.numpy())['image']
+def augmentation_heavy(image, label):
+    image = augmentor_heavy(image=image.numpy())['image']
     return image, label
 
-# @map_decorator
-# def jpeg_compression(image, label):
-#     buffer = io.BytesIO()
-#     Image.fromarray(image.numpy()).save(buffer, format='jpeg', quality=90)
-#     image = np.array(Image.open(buffer))
-#     return image, label
-#     # return F.image_compression(image, quality=90, image_type='.jpg')
+@map_decorator
+def augmentation_light(image, label):
+    image = augmentor_light(image=image.numpy())['image']
+    return image, label
 
 if Config.input.tiff_format:
 
@@ -238,7 +248,7 @@ def get_dataset(dataframe,
         return (
             tf.data.Dataset.from_tensor_slices((x, y))
             .map(stitch_patches, tf.data.experimental.AUTOTUNE)
-            .map(augmentation, tf.data.experimental.AUTOTUNE)
+            .map(augmentation_light, tf.data.experimental.AUTOTUNE)
             .batch(tta)
         )
 
@@ -287,11 +297,14 @@ def get_dataset(dataframe,
         dataset = dataset.map(
             lambda x, y: (
                 tf.reshape(x, (-1, *input_size)),
-                tf.reshape(y, (-1, 5))))
+                tf.reshape(y, (-1, labels.shape[1]))))
     else:
         dataset = dataset.map(stitch_patches, tf.data.experimental.AUTOTUNE)
         if augment:
-            dataset = dataset.map(augmentation, tf.data.experimental.AUTOTUNE)
+            if training:
+                dataset = dataset.map(augmentation_heavy, tf.data.experimental.AUTOTUNE)
+            else:
+                dataset = dataset.map(augmentation_light, tf.data.experimental.AUTOTUNE)
         dataset = dataset.batch(batch_size)
 
     dataset = dataset.map(preprocess_input, tf.data.experimental.AUTOTUNE)

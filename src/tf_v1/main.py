@@ -5,8 +5,9 @@ import math
 from sklearn import model_selection, metrics
 
 #from models.xception_norm import Xception as Engine
-from models.inception_norm import InceptionV3 as Engine
+#from models.inception_norm import InceptionV3 as Engine
 #from models.mixnet_norm import MixNetSmall as Engine
+from models.efficientnet_norm import EfficientNetB0 as Engine
 
 from config import Config
 from util import DataManager
