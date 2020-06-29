@@ -29,5 +29,5 @@ or
 
 ### Modeling
 1. Navigate to `src/tf_v1/`
-2. [Optional; Dataset (B) required] Clean up pen marks in images with pen marks, run `python scripts/remove_penmarks.py`
-3. Finally, start the modeling (fit and predict) by running `python main.py`
+2. [Optional; Dataset (B) required] Clean up pen marks in images with pen marks. Navigate into `scripts/` and run `python remove_penmarks.py`.
+3. Finally, start the modeling (fit and predict) by running `python main.py` from `src/tf_v1/`.

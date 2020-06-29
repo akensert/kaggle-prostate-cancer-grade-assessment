@@ -42,8 +42,8 @@ class Config:
         batch_size = 2
 
         class learning_rate:
-            max = 3e-4
-            min = 3e-5
+            max = 1e-4
+            min = 1e-5
             decay_epochs = 20
             warmup_epochs = 1
             power = 1
