@@ -28,6 +28,6 @@ or
 3. If (B), make sure to rename image filenames like this (Bash): `for f in input/prostate-cancer-grade-assessment/train_images/*; do mv "$f" "${f%_1.jpeg}.jpeg" ; done`<br>
 
 ### Modeling
-1. Navigate to `src/tf_v1/`
+1. Navigate to `src/`
 2. [Optional; Dataset (B) required] Clean up pen marks in images with pen marks. Navigate into `scripts/` and run `python remove_penmarks.py`.
-3. Finally, start the modeling (fit and predict) by running `python main.py` from `src/tf_v1/`.
+3. Finally, start the modeling (fit and predict) by running `python main.py` from `src/`.
