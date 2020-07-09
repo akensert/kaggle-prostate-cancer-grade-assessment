@@ -18,106 +18,16 @@ from config import Config
 augmentor_heavy = (
     Compose([
         OneOf([
-            ShiftScaleRotate(
-                shift_limit=0.2,
-                scale_limit=0.2,
-                rotate_limit=90,
-                p=0.1),
-            # ElasticTransform(
-            #     alpha=601,
-            #     sigma=20,
-            #     alpha_affine=10,
-            #     p=0.2),
-            RandomGridShuffle(
-                grid=(3, 3),
-                p=0.1),
-            GridDistortion(
-                num_steps=5,
-                distort_limit=0.3,
-                p=0.1),
-            # OpticalDistortion(
-            #     distort_limit=0.2,
-            #     shift_limit=0.2,
-            #     p=0.15),
-            NoOp(
-                p=0.5)
-        ]),
-        OneOf([
-            # RandomSizedCrop(
-            #     min_max_height=(
-            #         int(Config.input.input_shape[0]*0.8), Config.input.input_shape),
-            #     height=Config.input.input_shape,
-            #     width=Config.input.input_shape,
-            #     w2h_ratio=0.85,
-            #     p=0.2),
-            # CoarseDropout(
-            #     max_holes=4,
-            #     max_height=256,
-            #     max_width=256,
-            #     fill_value=255,
-            #     p=0.15),
-            Downscale(
-                scale_min=0.25,
-                scale_max=0.25,
-                p=0.1),
-            NoOp(
-                p=0.5)
-        ]),
-        OneOf([
-            MedianBlur(
-                blur_limit=7,
-                p=0.1),
-            GaussianBlur(
-                blur_limit=7,
-                p=0.1),
-            Blur(
-                blur_limit=7,
-                p=0.1),
-            # GlassBlur(
-            #     sigma=0.7,
-            #     max_delta=4,
-            #     iterations=2,
-            #     p=0.08),
-            # RandomFog(
-            #     p=0.08),
-            # Posterize(
-            #     num_bits=4,
-            #     p=0.08),
-            NoOp(
-                p=0.5),
-        ]),
-        # OneOf([
-        #     GaussNoise(
-        #         var_limit=(10.0, 100.0),
-        #         p=0.1),
-        #     ISONoise(
-        #         color_shift=(0.05, 0.1),
-        #         intensity=(0.1, 0.5),
-        #         p=0.1),
-        #     NoOp(
-        #         p=0.5)
-        # ]),
-        OneOf([
             RGBShift(
                 r_shift_limit=8,
                 g_shift_limit=8,
                 b_shift_limit=8,
-                p=0.25),
+                p=0.2),
             HueSaturationValue(
                 hue_shift_limit=8,
                 sat_shift_limit=16,
                 val_shift_limit=12,
-                p=0.25),
-            FancyPCA(
-                alpha=0.5,
-                p=0.1),
-            # ChannelDropout(
-            #     channel_drop_range=(1, 1),
-            #     p=0.1),
-            # ToGray(
-            #     p=0.1),
-            # ToSepia(
-            #     p=0.1),
+                p=0.2),
             NoOp(
                 p=0.5)
         ]),
@@ -125,13 +35,17 @@ augmentor_heavy = (
             RandomBrightnessContrast(
                 brightness_limit=0.1,
                 contrast_limit=0.1,
-                p=0.25),
+                p=0.2),
             RandomGamma(
                 gamma_limit=(90, 110),
-                p=0.25),
+                p=0.2),
             NoOp(
                 p=0.5)
         ]),
+        Downscale(
+            scale_min=0.25,
+            scale_max=0.25,
+            p=0.1),
         RandomRotate90(
             p=0.5),
         Flip(
@@ -180,21 +94,21 @@ if Config.input.tiff_format:
         return image
 
     @map_decorator
-    def read_image(image_path, label, level=Config.input.tiff_level, resize_ratio=Config.input.resize_ratio):
+    def read_image(image_path, label, level=Config.input.tiff_level, ratio=Config.input.resize_ratio):
         image_path = image_path.numpy().decode('utf-8')
         image = skimage.io.MultiImage(image_path + '.tiff')
         image = image[level]
         image = _crop_white(image)
-        if resize_ratio != 1:
-            new_w = int(image.shape[1]*resize_ratio)
-            new_h = int(image.shape[0]*resize_ratio)
+        if ratio == 2:
+            new_w = image.shape[1]//ratio
+            new_h = image.shape[0]//ratio
             image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
         return image, label
 else:
     @tf.function
-    def read_image(image_path, label):
+    def read_image(image_path, label, ratio=Config.input.resize_ratio):
         image = tf.io.read_file(image_path + '.jpeg')
-        if tf.strings.length(image) > 6_500_000:
+        if ratio == 2 or tf.strings.length(image) > 6_500_000:
             # Only 3 images in train set is too big to decode without ratio = 2
             # None of the images in test set is too big to decode
             image = tf.image.decode_jpeg(image, channels=3, ratio=2)

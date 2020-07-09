@@ -28,7 +28,8 @@ class DataManager:
         return path
 
     @classmethod
-    def get_train_data(cls, split=False, test_size=0.2, random_state=42, add_image_size_info=False):
+    def get_train_data(cls, split=False, test_size=0.05,
+                       random_state=42, add_image_size_info=False):
         if os.path.isfile(cls.get_path() + 'train.csv'):
             data = pd.read_csv(cls.get_path() + 'train.csv')
             if add_image_size_info:
@@ -67,7 +68,7 @@ class DataManager:
         )
 
 
-def _split(data, test_size=0.2, random_state=42):
+def _split(data, test_size, random_state):
     """Splits the data into train and valid set, in a stratified
     manner. Also puts similar examples in the same set (based
     on _/input/similar_examples_hashXXX.npy)"""

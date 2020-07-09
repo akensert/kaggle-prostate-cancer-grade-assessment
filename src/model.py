@@ -56,6 +56,7 @@ class BaseModel(metaclass=ABCMeta):
     def __init__(self, keras_model, optimizer, strategy,
                  mixed_precision, objective, label_smoothing):
         self.keras_model = keras_model
+
         if optimizer is not None:
             if mixed_precision:
                 self.optimizer = \
@@ -205,7 +206,7 @@ class Model(BaseModel):
 
             if score > best_score:
                 best_score = score
-                self.keras_model.save_weights(f'output/weights/model-{fold}-{epoch}.h5')
+                self.keras_model.save_weights(f'output/weights/{self.keras_model.layers[0].name}-{fold}-{epoch}.h5')
 
             with open('output/scores.txt', 'a') as f:
                 f.write(
@@ -318,7 +319,7 @@ class DistributedModel(BaseModel):
 
             if score > best_score:
                 best_score = score
-                self.keras_model.save_weights(f'output/weights/model-{fold}-{epoch}.h5')
+                self.keras_model.save_weights(f'output/weights/{self.keras_model.layers[0].name}-{fold}-{epoch}.h5')
 
             with open('output/scores.txt', 'a') as f:
                 if epoch == 0:

@@ -11,6 +11,7 @@ This script:
 
 import os
 
+import tensorflow as tf
 from tensorflow.python.keras import backend
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.applications import imagenet_utils
@@ -146,7 +147,7 @@ def ResNet(stack_fn,
   x = layers.Conv2D(64, 7, strides=2, use_bias=use_bias, name='conv1_conv')(x)
 
   if not preact:
-    x = layers.normalization_v2.SyncBatchNormalization(
+    x = tf.keras.layers.experimental.SyncBatchNormalization(
         axis=bn_axis, name='conv1_bn')(x)
     x = layers.Activation('relu', name='conv1_relu')(x)
 
@@ -156,7 +157,7 @@ def ResNet(stack_fn,
   x = stack_fn(x)
 
   if preact:
-    x = layers.normalization_v2.SyncBatchNormalization(
+    x = tf.keras.layers.experimental.SyncBatchNormalization(
         axis=bn_axis, name='post_bn')(x)
     x = layers.Activation('relu', name='post_relu')(x)
 
@@ -219,24 +220,24 @@ def block1(x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None):
   if conv_shortcut:
     shortcut = layers.Conv2D(
         4 * filters, 1, strides=stride, name=name + '_0_conv')(x)
-    shortcut = layers.normalization_v2.SyncBatchNormalization(
+    shortcut = tf.keras.layers.experimental.SyncBatchNormalization(
         axis=bn_axis, name=name + '_0_bn')(shortcut)
   else:
     shortcut = x
 
   x = layers.Conv2D(filters, 1, strides=stride, name=name + '_1_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
   x = layers.Conv2D(
       filters, kernel_size, padding='SAME', name=name + '_2_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
   x = layers.Conv2D(4 * filters, 1, name=name + '_3_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_3_bn')(x)
 
   x = layers.Add(name=name + '_add')([shortcut, x])
@@ -276,7 +277,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
   """
   bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
 
-  preact = layers.normalization_v2.SyncBatchNormalization(
+  preact = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_preact_bn')(x)
   preact = layers.Activation('relu', name=name + '_preact_relu')(preact)
 
@@ -288,7 +289,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
 
   x = layers.Conv2D(
       filters, 1, strides=1, use_bias=False, name=name + '_1_conv')(preact)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
@@ -299,7 +300,7 @@ def block2(x, filters, kernel_size=3, stride=1, conv_shortcut=False, name=None):
       strides=stride,
       use_bias=False,
       name=name + '_2_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
@@ -355,13 +356,13 @@ def block3(x,
         strides=stride,
         use_bias=False,
         name=name + '_0_conv')(x)
-    shortcut = layers.normalization_v2.SyncBatchNormalization(
+    shortcut = tf.keras.layers.experimental.SyncBatchNormalization(
         axis=bn_axis, name=name + '_0_bn')(shortcut)
   else:
     shortcut = x
 
   x = layers.Conv2D(filters, 1, use_bias=False, name=name + '_1_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_1_bn')(x)
   x = layers.Activation('relu', name=name + '_1_relu')(x)
 
@@ -379,13 +380,13 @@ def block3(x,
       lambda x: sum(x[:, :, :, :, i] for i in range(c)),
       name=name + '_2_reduce')(x)
   x = layers.Reshape(x_shape + (filters,))(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_2_bn')(x)
   x = layers.Activation('relu', name=name + '_2_relu')(x)
 
   x = layers.Conv2D(
       (64 // groups) * filters, 1, use_bias=False, name=name + '_3_conv')(x)
-  x = layers.normalization_v2.SyncBatchNormalization(
+  x = tf.keras.layers.experimental.SyncBatchNormalization(
       axis=bn_axis, name=name + '_3_bn')(x)
 
   x = layers.Add(name=name + '_add')([shortcut, x])

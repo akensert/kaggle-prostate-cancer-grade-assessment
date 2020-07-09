@@ -3,13 +3,26 @@ import pandas as pd
 import tensorflow as tf
 import math
 from sklearn import model_selection, metrics
+import sys
 
-#from models.xception_sync import Xception as Engine
-#from models.inception_sync import InceptionV3 as Engine
-#from models.densenet_sync import DenseNet121 as Engine
-#from models.inceptionresnet_sync import InceptionResNetV2 as Engine
-#from models.resnet_sync import ResNet50 as Engine
-from models.efficientnet_sync import EfficientNetB0 as Engine
+try:
+    engine_type = sys.argv[1]
+except:
+    engine_type = 'efficientnet'
+
+if engine_type == 'efficientnet':
+    from models.efficientnet_sync import EfficientNetB0 as Engine
+elif engine_type == 'inception':
+    from models.inception_sync import InceptionV3 as Engine
+elif engine_type == 'xception':
+    from models.xception_sync import Xception as Engine
+elif engine_type == 'inceptionresnet':
+    from models.inceptionresnet_sync import InceptionResNetV2 as Engine
+elif engine_type == 'densenet':
+    from models.densenet_sync import DenseNet121 as Engine
+elif engine_type == 'resnet':
+    from models.resnet_sync import ResNet50 as Engine
+
 
 from config import Config
 from util import DataManager
