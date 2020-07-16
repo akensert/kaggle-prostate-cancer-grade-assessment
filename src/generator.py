@@ -22,12 +22,12 @@ augmentor_heavy = (
                 r_shift_limit=8,
                 g_shift_limit=8,
                 b_shift_limit=8,
-                p=0.2),
+                p=0.15),
             HueSaturationValue(
                 hue_shift_limit=8,
                 sat_shift_limit=16,
                 val_shift_limit=12,
-                p=0.2),
+                p=0.15),
             NoOp(
                 p=0.5)
         ]),
@@ -35,17 +35,13 @@ augmentor_heavy = (
             RandomBrightnessContrast(
                 brightness_limit=0.1,
                 contrast_limit=0.1,
-                p=0.2),
+                p=0.25),
             RandomGamma(
                 gamma_limit=(90, 110),
-                p=0.2),
+                p=0.25),
             NoOp(
                 p=0.5)
         ]),
-        Downscale(
-            scale_min=0.25,
-            scale_max=0.25,
-            p=0.1),
         RandomRotate90(
             p=0.5),
         Flip(
@@ -108,14 +104,13 @@ else:
     @tf.function
     def read_image(image_path, label, ratio=Config.input.resize_ratio):
         image = tf.io.read_file(image_path + '.jpeg')
-        if ratio == 2 or tf.strings.length(image) > 6_500_000:
+        if ratio > 1 or tf.strings.length(image) > 6_500_000:
             # Only 3 images in train set is too big to decode without ratio = 2
             # None of the images in test set is too big to decode
-            image = tf.image.decode_jpeg(image, channels=3, ratio=2)
+            image = tf.image.decode_jpeg(image, channels=3, ratio=max(2, ratio))
         else:
             image = tf.image.decode_jpeg(image, channels=3)
         return image, label
-
 
 def augment_image(mode):
     def transform(image, label, mode=mode):
@@ -210,7 +205,7 @@ def stitch_patches(patches, label, ps=Config.input.patch_size, l=int(np.sqrt(Con
 def preprocess_input(x, y, mode=Config.input.preprocess_mode):
     x = tf.cast(x, dtype=tf.dtypes.float32)
     y = tf.cast(y, dtype=tf.dtypes.float32)
-    #x = 255. - x
+    # x = 255. - x
     if mode == 'tf':
         x /= 127.5
         x -= 1.

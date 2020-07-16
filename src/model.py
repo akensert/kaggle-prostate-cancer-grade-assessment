@@ -33,7 +33,6 @@ class NeuralNet(tf.keras.Model):
             weights=weights)
 
         self.pool = tf.keras.layers.GlobalAveragePooling2D()
-
         self.head = tf.keras.Sequential()
         for drop, unit, actv in zip(dropout, units, activation):
             if actv != None:
@@ -319,7 +318,8 @@ class DistributedModel(BaseModel):
 
             if score > best_score:
                 best_score = score
-                self.keras_model.save_weights(f'output/weights/{self.keras_model.layers[0].name}-{fold}-{epoch}.h5')
+                self.keras_model.save_weights(
+                    f'output/weights/{self.keras_model.layers[0].name}-{fold}-{epoch}.h5')
 
             with open('output/scores.txt', 'a') as f:
                 if epoch == 0:

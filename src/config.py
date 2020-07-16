@@ -21,11 +21,12 @@ class Config:
             tiff_format = True
         print("Image tiff-format: ", tiff_format)
 
+
         tiff_level = 1                   # only if tiff_format is Ture
-        resize_ratio = 1                 # 1 (e.g 512 x 512) or 2 (-> 256 x 256)
-        input_shape = (1536, 1536, 3)
+        resize_ratio = 1                 # 1 (N x N) or 2 (-> N//2 x N//2)
+        input_shape = (1280, 1280, 3)
         patch_size = 256
-        sample_size = 36
+        sample_size = 25
         preprocess_mode = 'float'
         objective = 'bce'
         label_smoothing = 0.0            # only if objective is 'cce'
@@ -37,13 +38,14 @@ class Config:
 
     class train:
         random_state = 42
+        test_size = 0.044
         fold = 0
         epochs = 20
         batch_size = 4
 
         class learning_rate:
-            max = 2e-4
-            min = 2e-5
+            max = 3e-4
+            min = 3e-5
             decay_epochs = 20
             warmup_epochs = 1
             power = 1

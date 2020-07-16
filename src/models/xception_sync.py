@@ -284,4 +284,4 @@ def Xception(
   elif weights is not None:
     model.load_weights(weights)
 
-  return
+  return model

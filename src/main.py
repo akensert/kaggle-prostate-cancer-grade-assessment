@@ -11,7 +11,7 @@ except:
     engine_type = 'efficientnet'
 
 if engine_type == 'efficientnet':
-    from models.efficientnet_sync import EfficientNetB0 as Engine
+    from models.efficientnet_sync import EfficientNetB4 as Engine
 elif engine_type == 'inception':
     from models.inception_sync import InceptionV3 as Engine
 elif engine_type == 'xception':
@@ -60,6 +60,7 @@ objective = Config.input.objective
 input_shape = Config.input.input_shape
 input_path = Config.input.path
 random_state = Config.train.random_state
+test_size = Config.train.test_size
 fold = Config.train.fold
 batch_size = Config.train.batch_size
 epochs = Config.train.epochs
@@ -75,7 +76,8 @@ dropout=Config.model.dropout
 activation=Config.model.activation
 
 train_data, valid_data = DataManager.get_train_data(
-    split=True, random_state=random_state, add_image_size_info=True)
+    split=True, test_size=test_size,
+    random_state=random_state, add_image_size_info=True)
 
 lr_steps_per_epoch=math.ceil(len(train_data) / Config.train.batch_size)
 
