@@ -2,7 +2,7 @@
 credits (implementation):
     - all credit to https://github.com/qubvel/efficientnet;
     - thank you very much for your contribution, Pavel Yakubovskiy.
-this script:
+this file:
     - slightly modified model.py of https://github.com/qubvel/efficientnet
     - important modification:
         - replacing BatchNormalization with SyncBatchNormalization.
