@@ -1,19 +1,16 @@
 """
-Credits:
-  All credit goes to https://github.com/qubvel/efficientnet
-  Thank you very much for your contribution, Pavel Yakubovskiy.
-
-This script:
-  slightly modified model.py of https://github.com/qubvel/efficientnet
-
-Important modification:
-    Replacing BatchNormalization with SyncBatchNormalization.
-    Syncs batch normalization between replica in multi-GPU training.
-
-Reference (Paper):
-  Mingxing Tan, Quoc V. Le
-  EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.
-  ICML'19, https://arxiv.org/abs/1905.11946
+credits (implementation):
+    - all credit to https://github.com/qubvel/efficientnet;
+    - thank you very much for your contribution, Pavel Yakubovskiy.
+this script:
+    - slightly modified model.py of https://github.com/qubvel/efficientnet
+    - important modification:
+        - replacing BatchNormalization with SyncBatchNormalization.
+        - syncs batch normalization between replica in multi-GPU training.
+reference (paper):
+    Mingxing Tan, Quoc V. Le
+    EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.
+    ICML'19, https://arxiv.org/abs/1905.11946
 """
 
 from __future__ import absolute_import

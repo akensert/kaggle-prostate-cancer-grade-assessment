@@ -1,12 +1,16 @@
 """
-Reference:
-    https://www.tensorflow.org/api_docs/python/tf/keras/applications
-Github repo:
-    https://github.com/tensorflow/tensorflow/tree/v2.2.0/tensorflow/python/keras/applications
-Credits to:
-    TensorFlow
-This script:
-    Slightly modified from the original
+reference:
+    - https://www.tensorflow.org/api_docs/python/tf/keras/applications
+github repo:
+    - https://github.com/tensorflow/tensorflow/tree/v2.2.0/
+        tensorflow/python/keras/applications
+credits to:
+    - TensorFlow
+this file:
+    - slightly modified from the original
+    - important modification:
+        - Replacing BatchNormalization with SyncBatchNormalization.
+        - Syncs batch normalization between replica in multi-GPU training.
 """
 
 import os
