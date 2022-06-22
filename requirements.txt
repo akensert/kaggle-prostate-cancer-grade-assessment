@@ -2,7 +2,7 @@ albumentations==0.4.5
 efficientnet==1.1.0
 jupyter==1.0.0
 matplotlib==3.2.1
-numpy==1.18.4
+numpy==1.22.0
 opencv-python==4.2.0.34
 pandas==1.0.3
 scikit-image==0.16.2
