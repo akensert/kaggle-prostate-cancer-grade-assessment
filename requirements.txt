@@ -7,6 +7,6 @@ opencv-python==4.2.0.34
 pandas==1.0.3
 scikit-image==0.16.2
 scikit-learn==0.22.2.post1
-scipy==1.4.1
+scipy==1.10.0
 tf-nightly==2.3.0.dev20200608
 tqdm==4.45.0
